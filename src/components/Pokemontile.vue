@@ -16,7 +16,7 @@
 
 <script>
 export default {
-  name: 'pokemontile',
+  name: 'Pokemontile',
   props: ['pokemon'],
   data: function () {
     return {

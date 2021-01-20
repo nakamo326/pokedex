@@ -1,12 +1,13 @@
 <template>
   <div >
+    <MyHeader></MyHeader>
     <section v-if="errored">
-    <p>{{errmsg}}</p>
+      <p>{{errmsg}}</p>
     </section>
     <section v-else class="content">
       <div v-if="loading">Loading...</div>
       <div v-else>
-        <h2>Pokedex.vue</h2>
+        <input type="button" value="Next" @click="getNextPage()">
         <div class="box">
           <PokemonTile
             v-for="pokemon in results"
@@ -20,19 +21,22 @@
 </template>
 
 <script>
-import PokemonTile from './pokemontile.vue'
+import PokemonTile from './Pokemontile.vue'
+import MyHeader from './MyHeader.vue'
 
 export default {
   name: 'Pokedex',
   components: {
-    PokemonTile
+    PokemonTile,
+    MyHeader
   },
   data: function () {
     return {
       errored: false,
       errmsg: '',
       loading: true,
-      results: ''
+      results: '',
+      next: ''
     }
   },
   mounted () {
@@ -40,12 +44,29 @@ export default {
       .get('https://pokeapi.co/api/v2/pokemon/?offset=0&limit=50')
       .then((res) => {
         this.results = res.data.results;
+        this.next = res.data.next;
       })
       .catch(error => {
         this.errmsg = error;
         this.errored = true;
       })
       .finally(() => this.loading = false)
+  },
+  methods: {
+    getNextPage : function () {
+      this.loading = true;
+      this.$axios
+      .get(this.next)
+      .then((res) => {
+        this.results = res.data.results;
+        this.next = res.data.next;
+      })
+      .catch(error => {
+        this.errmsg = error;
+        this.errored = true;
+      })
+      .finally(() => this.loading = false)
+    }
   }
 }
 </script>
