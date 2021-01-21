@@ -1,15 +1,17 @@
 <template>
   <div class="tile">
     <section v-if="errored">
-    <p>{{errmsg}}</p>
+      <p>{{errmsg}}</p>
     </section>
     <section v-else >
       <div v-if="loading">Loading...</div>
-      <div v-else >
-        <img v-bind:src="this.pic" alt="sprite" width="200">
-      </div>
-      <span>No.{{info.id}}: </span>
-      <span>{{this.jpName}}</span>
+      <router-link v-else v-bind:to="'/pokemon/'+info.id">
+        <div>
+          <img v-bind:src="this.pic" v-bind:alt="pokemon.name" width="200" height="200">
+        </div>
+        <span>No.{{info.id}}: </span>
+        <span>{{this.jpName}}</span>
+      </router-link>
     </section>
   </div>
 </template>
@@ -49,7 +51,7 @@ export default {
       .finally(() => this.loading = false)
   },
   methods : {
-    getJpName (names) {
+    getJpName (names){
       const obj = names.find((item) => {
         if (item.language.name === "ja-Hrkt") return true;
       })
@@ -63,7 +65,6 @@ export default {
 .tile {
   text-align: center;
   margin: 5px 5px 5px 5px;
-  background-color:antiquewhite;
   border-radius: 10px;
 }
 

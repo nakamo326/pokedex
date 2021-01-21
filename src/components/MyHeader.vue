@@ -1,6 +1,6 @@
 <template>
   <div class="content">
-    <h1>Pokedex.vue</h1>
+    <div>Pokedex.vue</div>
   </div>
 </template>
 
@@ -12,7 +12,9 @@ export default {
 
 <style scoped>
 .content {
-  background-color:blueviolet;
+  background-color:#0f4c81;
+  color: white;
+  font-size: 24px;
 }
 
 </style>
