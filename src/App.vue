@@ -1,17 +1,13 @@
 
 <template>
   <div id="app">
-    <Pokedex/>
+    <router-view/>
   </div>
 </template>
 
 <script>
-import Pokedex from './components/Pokedex.vue'
 
 export default {
   name: 'App',
-  components: {
-    Pokedex
-  }
 }
 </script>
