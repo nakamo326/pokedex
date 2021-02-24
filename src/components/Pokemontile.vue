@@ -1,25 +1,44 @@
 <template>
-  <div class="tile">
+  <v-col class="d-flex justify-center">
     <section v-if="errored">
-      <p>{{errmsg}}</p>
+      <v-alert type="error">{{errmsg}}</v-alert>
     </section>
     <section v-else >
-      <div v-if="loading">Loading...</div>
-      <router-link v-else v-bind:to="'/pokemon/'+info.id">
-        <div>
-          <img v-bind:src="this.pic" v-bind:alt="pokemon.name" width="200" height="200">
+      <div v-if="loading">
+        <v-card outlined class="card-loading text-center">
+          <v-progress-circular
+            indeterminate
+            size="70"
+            color="primary"
+          ></v-progress-circular>
+          <div>Loading...</div>
+        </v-card>
+      </div>
+      <router-link v-else v-bind:to="{path:'/pokemon/'+info.id, query:{locale: this.locale}}">
+
+      <v-card outlined hover class="text-center pa-1">
+        <div class ="img-blank">
+          <v-img
+            max-width="200"
+            max-height="200"
+            :src="this.pic"
+            :alt="pokemon.name"
+          >
+          </v-img>
         </div>
-        <span>No.{{info.id}}: </span>
-        <span>{{this.jpName}}</span>
+        <v-chip>No.{{info.id}}</v-chip>
+        <span class="text-body1">{{this.jpName}}</span>
+      </v-card>
+
       </router-link>
     </section>
-  </div>
+  </v-col>
 </template>
 
 <script>
 export default {
   name: 'Pokemontile',
-  props: ['pokemon'],
+  props: ['pokemon', 'locale'],
   data: function () {
     return {
       errored: false,
@@ -30,42 +49,49 @@ export default {
       pic: ''
     }
   },
-  mounted (){
-    this.$axios
-      .get(this.pokemon.url)
-      .then((res) => {
-        this.info = res.data;
-        this.pic = res.data.sprites.other["official-artwork"].front_default;
-      })
-      .then(() => {
-        this.$axios
-        .get(this.info.species.url)
-        .then((res) => {
-          this.jpName = this.getJpName(res.data.names);
-        })
-      })
-      .catch(error => {
-        this.errmsg = error;
-        this.errored = true
-      })
-      .finally(() => this.loading = false)
+  async mounted (){
+    this.info = await this.getPokeInfo(this.pokemon.url);
+    this.pic = this.info.sprites.other["official-artwork"].front_default;
+    this.jpName = await this.getJpString(this.info.species.url);
+    this.loading = false
   },
   methods : {
-    getJpName (names){
-      const obj = names.find((item) => {
-        if (item.language.name === "ja-Hrkt") return true;
+    async getPokeInfo(url) {
+      let res = null;
+      res = await this.$axios.get(url)
+      .catch(error => {
+        this.errmsg = error;
+        this.errored = true;
       })
-      return obj.name;
+      return res.data;
+    },
+    async getJpString (url) {
+      let res = null;
+      res = await this.$axios.get(url)
+      .catch(error => {
+        this.errmsg = error;
+        this.errored = true;
+      })
+      let ret = res.data.names.find((item) => {
+        if (item.language.name === this.locale) return true;
+      })
+      return ret.name;
     }
   }
 }
 </script>
 
 <style scoped>
-.tile {
-  text-align: center;
-  margin: 5px 5px 5px 5px;
-  border-radius: 10px;
+.card-loading {
+  width: 210px;
+  height: 252px;
+  padding-top:80px;
 }
 
+.img-blank {
+  width: 200px;
+  height: 200px;
+}
+
+a {text-decoration: none;}
 </style>

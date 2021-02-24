@@ -1,25 +1,44 @@
 <template>
   <div >
-    <MyHeader></MyHeader>
+    <MyHeader @catchLang='reload($event)' @backhome='setPageNum(1)'></MyHeader>
     <section v-if="errored">
-      <p>{{errmsg}}</p>
+      <v-alert type="error">{{errmsg}}</v-alert>
     </section>
-    <section v-else class="content">
-      <div v-if="loading">Loading...</div>
-      <div v-else>
-        <div>
-          <span class="pad"></span>
-          <input type="button" value="Prev" @click="getNewPage(prev)">
-          <input type="button" value="Next" @click="getNewPage(next)">
-          <div class="box">
+    <section v-else class="primary lighten-3">
+      <v-container>
+        <div v-if="loading" class="d-flex justify-center">
+          <v-progress-circular
+          indeterminate
+          size="100"
+          color="primary"
+          ></v-progress-circular>
+          <br/>
+          <div class="primary--text">Loading...</div>
+        </div>
+        <v-row v-else>
             <PokemonTile
               v-for="pokemon in results"
               v-bind:key="pokemon.url"
               v-bind:pokemon="pokemon"
+              v-bind:locale="locale"
             ></PokemonTile>
+        </v-row>
+        <div v-if="showModal">
+          <div class="modal-route" @click="$router.push('/').catch(()=>{})">
+            <div class="modal">
+              <router-view></router-view>
+            </div>
           </div>
         </div>
-      </div>
+        <div class="text-center">
+          <v-pagination
+            v-model="page"
+            :length="pageLength"
+            :total-visible="7"
+            @input="setPageNum"
+          ></v-pagination>
+        </div>
+      </v-container>
     </section>
   </div>
 </template>
@@ -34,22 +53,37 @@ export default {
     PokemonTile,
     MyHeader
   },
+  watch: {
+    $route: {
+      immediate: true,
+      handler: function(newVal) {
+        this.showModal = newVal.meta && newVal.meta.showModal;
+      }
+    }
+  },
   data: function () {
     return {
       errored: false,
       errmsg: '',
       loading: true,
+      showModal: false,
+      locale: "ja-Hrkt",
       results: '',
-      next: 'https://pokeapi.co/api/v2/pokemon/?offset=0&limit=24',
-      prev: ''
-
+      firstUrl: 'https://pokeapi.co/api/v2/pokemon/?offset=0&limit=30',
+      next: '',
+      current:'',
+      prev: '',
+      count: '',
+      page: 1,
+      perPage: 30,
+      pageLength: 0
     }
   },
   mounted () {
-    this.getNewPage(this.next);
+    this.getNewPage(this.firstUrl);
   },
   methods: {
-    getNewPage : function (url) {
+    getNewPage (url) {
       if (url === null)
         return ;
       this.loading = true;
@@ -57,33 +91,50 @@ export default {
       .get(url)
       .then((res) => {
         this.results = res.data.results;
+        this.count = res.data.count;
+        this.pageLength = Math.floor(this.count / this.perPage) + 1;
         this.next = res.data.next;
         this.prev = res.data.previous;
+        this.current = url;
       })
       .catch(error => {
         this.errmsg = error;
         this.errored = true;
       })
       .finally(() => this.loading = false)
+    },
+    reload (selectedLanguage) {
+      console.log("catch the value is " + selectedLanguage);
+      this.locale = selectedLanguage;
+      this.getNewPage(this.current);
+    },
+    setPageNum (pageNumber) {
+      this.page = pageNumber;
+      let limit = this.perPage;
+      let offset = this.perPage * (pageNumber - 1);
+      this.getNewPage(`https://pokeapi.co/api/v2/pokemon/?offset=${offset}&limit=${limit}`);
     }
   }
 }
 </script>
 
 <style>
-.pad {
-  margin-right: 90%;
-}
-.content {
+.modal-route {
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background-color: #b5c6e7;
+  background: rgba(0, 0, 0, 0.5);
 }
 
-.box {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 100%;
+.modal {
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
 }
 </style>
